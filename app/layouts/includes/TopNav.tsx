@@ -5,7 +5,7 @@ import { BiSearch, BiUser } from "react-icons/bi"
 import { AiOutlinePlus } from "react-icons/ai"
 import { BsThreeDotsVertical } from "react-icons/bs"
 import { FiLogOut } from "react-icons/fi"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useUser } from "@/app/context/user"
 import { useGeneralStore } from "@/app/stores/general"
 import useCreateBucketUrl from "@/app/appwrite-hooks/useCreateBucketUrl"
@@ -13,9 +13,10 @@ import { RandomUsers } from "@/app/types"
 import useSearchProfilesByName from "@/app/appwrite-hooks/useSearchProfilesByName";
 
 export default function TopNav() {    
-    const userContext = useUser()
-    const router = useRouter()
-    const pathname = usePathname()
+    const userContext = useUser();
+    const router = useRouter();
+    const pathname = usePathname();
+    const menuRef = useRef<HTMLDivElement>(null);
 
     const [searchProfiles, setSearchProfiles] = useState<RandomUsers[]>([])
     let [showMenu, setShowMenu] = useState<boolean>(false)
@@ -23,6 +24,18 @@ export default function TopNav() {
 
     useEffect(() => { setIsEditProfileOpen(false) }, [])
 
+    useEffect(() => {
+        const handleOutsideClick = handleClickOutside;
+        document.addEventListener('click', handleOutsideClick);
+        return () => document.removeEventListener('click', handleClickOutside)
+    }, [])
+
+    const handleClickOutside = (event: MouseEvent) => {
+        if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+            setShowMenu(false)
+        }
+    }
+    
     const handleSearchName = debounce(async (event: { target: { value: string } }) => {
         if (event.target.value == "") return setSearchProfiles([])
 
@@ -104,10 +117,10 @@ export default function TopNav() {
                         ) : (
                             <div className="flex items-center">
 
-                                <div className="relative">
+                                <div className="relative" ref={menuRef}>
 
                                     <button 
-                                        onClick={() => setShowMenu(showMenu = !showMenu)} 
+                                        onClick={() => setShowMenu((prevShowMenu) => !prevShowMenu)} 
                                         className="mt-1 border border-gray-200 rounded-full"
                                     >
                                         <img className="rounded-full w-[35px] h-[35px]" src={useCreateBucketUrl(userContext?.user?.image || '')} />
